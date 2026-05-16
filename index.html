@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Dashboard | 專案進度追蹤看板 V3.0</title>
+  <!-- 引入 Tabler Icons 與 Google Fonts -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+      --primary-color: #4f46e6;
+      --bg-light: #f8fafc;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --white: #ffffff;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --indigo: #6366f1;
+      --rose: #f43f5e;
+      --slate: #475569;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- 左側側邊欄 --- */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--white);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 0 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-group {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 0.75rem;
+    }
+
+    .nav-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 1.5rem 0.75rem 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background-color: #f1f5f9; }
+    .nav-item.active { background-color: #eef2ff; color: var(--primary-color); }
+
+    /* --- 右側內容區 --- */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 頂部導覽列 */
+    .top-bar {
+      height: 70px;
+      background-color: var(--white);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+    }
+
+    .search-area {
+      flex: 1;
+      max-width: 500px;
+      position: relative;
+    }
+
+    .search-area i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-area input {
+      width: 100%;
+      padding: 12px 12px 12px 45px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 1rem;
+      background-color: #f1f5f9;
+      transition: 0.2s;
+    }
+
+    .search-area input:focus {
+      outline: none;
+      background-color: var(--white);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .refresh-btn {
+      background-color: var(--white);
+      border: 1px solid var(--border-color);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+
+    .refresh-btn:hover { background-color: #f8fafc; }
+
+    /* --- 儀表板數據區 --- */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem 2rem 0;
+      flex-shrink: 0;
+    }
+
+    .stat-card {
+      background-color: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .icon-all { background-color: #eef2ff; color: var(--primary-color); }
+    .icon-active { background-color: #f0fdf4; color: var(--success); }
+    .icon-proof { background-color: #fffbeb; color: var(--warning); }
+    .icon-hold { background-color: #f1f5f9; color: var(--slate); }
+    .icon-decision { background-color: #fff1f2; color: var(--rose); }
+    .icon-problem { background-color: #fef2f2; color: var(--danger); }
+
+    /* 任務清單容器 */
+    .content-scroll {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr 1fr 1fr;
+      padding: 0 1.5rem 1rem;
+      border-bottom: 2px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .task-list {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 任務列樣式 */
+    .task-row {
+      background-color: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: 2.5fr 1fr 1fr 1fr;
+      align-items: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .task-row:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      border-color: var(--primary-color);
+      transform: scale(1.005);
+    }
+
+    .task-name-cell { display: flex; flex-direction: column; gap: 4px; }
+    .task-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+    .task-sub { font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    .person-cell, .date-cell { font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+    .status-cell { justify-self: end; }
+
+    /* 狀態標籤 */
+    .badge {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-block;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .status-待處理 { background-color: #fef3c7; color: #92400e; }
+    .status-資訊不全 { background-color: #b91c1c; color: #ffffff; }
+    .status-已接單 { background-color: #dbeafe; color: #1e40af; }
+    .status-設計中 { background-color: #f3e8ff; color: #6b21a8; }
+    .status-待校稿 { background-color: #ffedd5; color: #9a3412; }
+    .status-暫緩執行 { background-color: #cfd8dc; color: #37474f; }
+    .status-老闆決策中 { background-color: #ffe4e6; color: #9f1239; }
+    .status-已發印 { background-color: #dcfce7; color: #166534; }
+    .status-已結案 { background-color: #f3f4f6; color: #4b5563; }
+    .status-作廢 { background-color: #991b1b; color: #ffffff; }
+
+    /* 異常提醒 */
+    .problem-alert { margin-top: 8px; font-size: 0.8rem; color: var(--danger); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+
+    /* 錯誤顯示區 */
+    .error-container {
+      background-color: #fef2f2;
+      border: 1px solid #fee2e2;
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem;
+      color: #991b1b;
+      display: none;
+    }
+    .error-container h3 { margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+    .error-container p { margin-bottom: 0.5rem; }
+
+    /* 載入動畫 */
+    #loading { text-align: center; padding: 5rem; color: var(--primary-color); font-weight: 700; }
+    .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    @media (max-width: 1000px) {
+      .dashboard-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .dashboard-grid { grid-template-columns: 1fr 1fr; padding: 1rem; }
+      .table-header { grid-template-columns: 2fr 1fr; }
+      .date-cell, .person-cell { display: none; }
+      .task-row { grid-template-columns: 2fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 左側側邊欄 -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h2><i class="ti ti-chart-bar"></i> 進度看板</h2>
+    </div>
+
+    <div class="nav-group">
+      <a class="nav-item active" onclick="setStatusFilter('all', this)">
+        <i class="ti ti-list-details"></i> 總覽看板
+      </a>
+
+      <div class="nav-label">任務狀態篩選</div>
+      <a class="nav-item" onclick="setStatusFilter('待處理', this)"><i class="ti ti-clock" style="color:#92400e"></i> 待處理事項</a>
+      <a class="nav-item" onclick="setStatusFilter('資訊不全', this)"><i class="ti ti-alert-circle" style="color:#b91c1c"></i> 資訊不全</a>
+      <a class="nav-item" onclick="setStatusFilter('已接單', this)"><i class="ti ti-checkbox" style="color:#1e40af"></i> 已接單項目</a>
+      <a class="nav-item" onclick="setStatusFilter('設計中', this)"><i class="ti ti-palette" style="color:#6b21a8"></i> 正在設計中</a>
+      <a class="nav-item" onclick="setStatusFilter('待校稿', this)"><i class="ti ti-message-dots" style="color:#9a3412"></i> 審核校稿中</a>
+      <a class="nav-item" onclick="setStatusFilter('暫緩執行', this)"><i class="ti ti-player-pause" style="color:#37474f"></i> 暫緩執行件</a>
+      <a class="nav-item" onclick="setStatusFilter('老闆決策中', this)"><i class="ti ti-user-exclamation" style="color:#9f1239"></i> 老闆決策中</a>
+      <a class="nav-item" onclick="setStatusFilter('已發印', this)"><i class="ti ti-printer" style="color:#166534"></i> 任務已發印</a>
+      <a class="nav-item" onclick="setStatusFilter('已結案', this)"><i class="ti ti-circle-check" style="color:#4b5563"></i> 已完工結案</a>
+      <a class="nav-item" onclick="setStatusFilter('作廢', this)"><i class="ti ti-trash-x" style="color:#991b1b"></i> 已作廢案件</a>
+    </div>
+  </nav>
+
+  <!-- 右側主內容區 -->
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="search-area">
+        <i class="ti ti-search"></i>
+        <input type="text" id="searchInput" placeholder="輸入任務、案號或負責人搜尋..." onkeyup="handleSearch()">
+      </div>
+      
+      <button class="refresh-btn" onclick="fetchData()">
+        <i id="refreshIcon" class="ti ti-refresh"></i> 重新整理
+      </button>
+    </header>
+
+    <!-- 儀表板數據卡片 -->
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-header">案件總數 <div class="stat-icon icon-all"><i class="ti ti-clipboard-list"></i></div></div>
+        <div class="stat-value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">進行中 <div class="stat-icon icon-active"><i class="ti ti-palette"></i></div></div>
+        <div class="stat-value" id="stat-active">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">待校稿 <div class="stat-icon icon-proof"><i class="ti ti-message-dots"></i></div></div>
+        <div class="stat-value" id="stat-proof">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">暫緩執行 <div class="stat-icon icon-hold"><i class="ti ti-player-pause"></i></div></div>
+        <div class="stat-value" id="stat-hold">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">決策中 <div class="stat-icon icon-decision"><i class="ti ti-gavel"></i></div></div>
+        <div class="stat-value" id="stat-decision">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">資訊不全 <div class="stat-icon icon-problem"><i class="ti ti-alert-triangle"></i></div></div>
+        <div class="stat-value" id="stat-problem">0</div>
+      </div>
+    </div>
+
+    <!-- 錯誤訊息提示 -->
+    <div id="errorBox" class="error-container">
+      <h3><i class="ti ti-circle-x"></i> 無法連線至中央資料庫 (Fetch Failed)</h3>
+      <p>這通常是安全性或部署設定問題。請嘗試以下修復步驟：</p>
+      <ul style="margin-left: 1.5rem; margin-top: 1rem; color: #7f1d1d;">
+        <li><strong>權限檢查：</strong>請至 Google Apps Script 點擊「部署」→「管理部署」，確認「誰可以存取」已設為 <strong>「所有人」(Anyone)</strong>。</li>
+        <li><strong>網址授權：</strong>如果您最近更動過試算表，請在 GAS 編輯器中手動執行一次 <code>doGet</code> 函數以重新授予權限。</li>
+        <li><strong>重新部署：</strong>每次修改 GAS 程式碼後，必須點擊部署並選擇<strong>「新版本」</strong>，舊網址可能已失效。</li>
+        <li><strong>環境限制：</strong>在某些沙盒環境下，Google 服務的重導向可能會被攔截，建議直接使用正式部署網址開啟。</li>
+      </ul>
+    </div>
+
+    <div class="content-scroll">
+      <div class="table-header">
+        <div>任務名稱 / 案號</div>
+        <div>執行人員</div>
+        <div>期望交期</div>
+        <div style="text-align: right;">當前狀態</div>
+      </div>
+
+      <div id="loading">
+        <i class="ti ti-loader-2 animate-spin" style="font-size: 2.5rem; margin-bottom: 1rem; display: block; margin-left: auto; margin-right: auto;"></i>
+        同步中央資料庫數據中...
+      </div>
+
+      <div id="taskList" class="task-list"></div>
+    </div>
+  </main>
+
+  <script>
+    // 已更新為您提供的部署作業 ID 對應網址
+    const API_URL = "https://script.google.com/macros/s/AKfycbyOIa5FlSYzjnzj0kAICo9_L5ehS7i6AO60droQub-gzWiX5mb48P4lohLNjTaSVLTA/exec";
+    
+    let allData = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    window.onload = fetchData;
+
+    async function fetchData() {
+      const list = document.getElementById('taskList');
+      const loading = document.getElementById('loading');
+      const icon = document.getElementById('refreshIcon');
+      const errorBox = document.getElementById('errorBox');
+      
+      loading.style.display = 'block';
+      errorBox.style.display = 'none';
+      list.innerHTML = "";
+      icon.classList.add('animate-spin');
+
+      try {
+        // 使用極簡 fetch 以避免跨域預檢失敗
+        const response = await fetch(`${API_URL}?t=${Date.now()}`);
+
+        if (!response.ok) {
+           throw new Error(`伺服器回應錯誤: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        allData = Array.isArray(result) ? result : [];
+        loading.style.display = 'none';
+        applyFilters();
+      } catch (error) {
+        console.error("資料獲取失敗:", error);
+        loading.style.display = 'none';
+        errorBox.style.display = 'block';
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    function updateDashboard(filteredData) {
+      document.getElementById('stat-total').innerText = filteredData.length;
+      
+      const activeCount = filteredData.filter(item => 
+        item.status === '設計中' || item.status === '已接單'
+      ).length;
+      document.getElementById('stat-active').innerText = activeCount;
+
+      const proofCount = filteredData.filter(item => item.status === '待校稿').length;
+      document.getElementById('stat-proof').innerText = proofCount;
+
+      const holdCount = filteredData.filter(item => item.status === '暫緩執行').length;
+      document.getElementById('stat-hold').innerText = holdCount;
+
+      const decisionCount = filteredData.filter(item => item.status === '老闆決策中').length;
+      document.getElementById('stat-decision').innerText = decisionCount;
+
+      const problemCount = filteredData.filter(item => item.status === '資訊不全').length;
+      document.getElementById('stat-problem').innerText = problemCount;
+    }
+
+    function setStatusFilter(status, element) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+      currentFilter = status;
+      applyFilters();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      applyFilters();
+    }
+
+    function applyFilters() {
+      let filtered = allData;
+      if (currentFilter !== 'all') filtered = filtered.filter(item => item.status === currentFilter);
+      if (searchQuery) {
+        filtered = filtered.filter(item => 
+          (item.caseName || "").toLowerCase().includes(searchQuery) ||
+          (item.ticketId || "").toLowerCase().includes(searchQuery) ||
+          (item.applicant || "").toLowerCase().includes(searchQuery) ||
+          (item.executor || "").toLowerCase().includes(searchQuery)
+        );
+      }
+      updateDashboard(filtered);
+      renderList(filtered);
+    }
+
+    function renderList(data) {
+      const container = document.getElementById('taskList');
+      if (data.length === 0) {
+        container.innerHTML = "<div style='text-align:center; padding: 5rem; color:#cbd5e1;'><i class='ti ti-search-off' style='font-size:3rem; margin-bottom:1rem; display:block;'></i>目前無符合條件的案件</div>";
+        return;
+      }
+
+      container.innerHTML = data.map(item => {
+        const status = item.status || '待處理';
+        return `
+          <div class="task-row">
+            <div class="task-name-cell">
+              <span class="task-title">${item.caseName || '未命名案件'}</span>
+              <span class="task-sub">ID: ${item.ticketId} | ${item.applicant} (${item.dept})</span>
+              ${status === '資訊不全' ? `<div class="problem-alert"><i class="ti ti-alert-triangle"></i> 內容不全，請補齊資料</div>` : ''}
+              ${status === '作廢' ? `<div class="problem-alert" style="color:#94a3b8;"><i class="ti ti-trash"></i> 此案件已終止</div>` : ''}
+            </div>
+            <div class="person-cell"><i class="ti ti-user-check"></i> ${item.executor}</div>
+            <div class="date-cell"><i class="ti ti-calendar-time"></i> ${formatDate(item.deadline)}</div>
+            <div class="status-cell"><span class="badge status-${status}">${status}</span></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatDate(val) {
+      if(!val) return "未定";
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? val : d.toLocaleDateString('zh-TW');
+    }
+
+    // 每 5 分鐘背景刷新
+    setInterval(fetchData, 300000);
+  </script>
+</body>
+</html>
